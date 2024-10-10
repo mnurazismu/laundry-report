@@ -21,7 +21,6 @@ const Dashboard: React.FC = () => {
           <h1 className="text-3xl font-bold text-primary-800 dark:text-primary-100">
             Welcome back, {user?.name || "User"}!
           </h1>
-          <SignOut />
         </div>
 
         <p className="text-xl mb-8 text-primary-700 dark:text-primary-200">
@@ -53,6 +52,9 @@ const Dashboard: React.FC = () => {
             icon="📄"
             href="/dashboard/generate-invoice"
           />
+        </div>
+        <div className="flex justify-end mt-8">
+          <SignOut />
         </div>
       </div>
     </div>
