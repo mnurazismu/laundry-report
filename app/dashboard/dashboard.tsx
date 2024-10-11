@@ -32,25 +32,25 @@ const Dashboard: React.FC = () => {
             title="Daily Report"
             description="View and analyze your daily laundry operations"
             icon="📅"
-            href="/dashboard/daily-report"
+            href="/report/daily-report"
           />
           <FeatureCard
             title="Weekly Report"
             description="Get insights into your weekly performance"
             icon="📊"
-            href="/dashboard/weekly-report"
+            href="/report/weekly-report"
           />
           <FeatureCard
             title="Monthly Report"
             description="Analyze long-term trends and monthly statistics"
             icon="📈"
-            href="/dashboard/monthly-report"
+            href="/report/monthly-report"
           />
           <FeatureCard
             title="Generate Invoice"
             description="Create and manage invoices for your customers"
             icon="📄"
-            href="/dashboard/generate-invoice"
+            href="/generate-invoice"
           />
         </div>
         <div className="flex justify-end mt-8">
