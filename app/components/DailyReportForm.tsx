@@ -135,7 +135,7 @@ const DailyReportForm: React.FC = () => {
     `block text-sm font-medium ${
       activeInput === inputId
         ? "text-blue-500"
-        : "text-primary-800 dark:text-primary-100"
+        : "text-black dark:text-primary-100"
     }`;
 
   return (
