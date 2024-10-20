@@ -2,12 +2,12 @@ import { useAuth } from "@/app/components/AuthProvider";
 import { db } from "@/app/lib/firebase";
 import { format } from "date-fns";
 import {
-    collection,
-    getDocs,
-    limit,
-    orderBy,
-    query,
-    where,
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  where,
 } from "firebase/firestore";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -21,6 +21,9 @@ interface MonthlyReportDetailProps {
 
 type JsPDFWithPlugin = jsPDF & {
   autoTable: (options: UserOptions) => void;
+  lastAutoTable: {
+    finalY: number;
+  };
 };
 
 const MonthlyReportDetail: React.FC<MonthlyReportDetailProps> = ({ month }) => {
@@ -134,7 +137,7 @@ const MonthlyReportDetail: React.FC<MonthlyReportDetailProps> = ({ month }) => {
     const finalBalance =
       reports.length > 0 ? reports[reports.length - 1].balance : 0;
 
-    (doc as any).autoTable({
+    doc.autoTable({
       head: [tableColumn],
       body: tableRows,
       startY: 25,
@@ -144,13 +147,12 @@ const MonthlyReportDetail: React.FC<MonthlyReportDetailProps> = ({ month }) => {
       alternateRowStyles: { fillColor: [242, 242, 242] },
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY || 30;
-
+    const finalY = doc.lastAutoTable.finalY || 30;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     doc.text("Monthly Summary:", 14, finalY + 10);
 
-    (doc as any).autoTable({
+    doc.autoTable({
       head: [
         ["", "Total Income", "Total Expenses", "Net Result", "Final Balance"],
       ],
