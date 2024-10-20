@@ -1,18 +1,10 @@
 'use client'
 
+import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { DailyReport } from '../types/report';
 import { useAuth } from './AuthProvider';
-
-interface DailyReport {
-  id: string;
-  date: Date;
-  income: number;
-  expenses: number;
-  previousBalance: number;
-  result: number;
-}
 
 const PreviousReportsList: React.FC = () => {
   const [reports, setReports] = useState<DailyReport[]>([]);
@@ -79,7 +71,7 @@ const PreviousReportsList: React.FC = () => {
               {reports.map((report) => (
                 <tr key={report.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-800 dark:text-primary-100">
-                    {report.date.toLocaleDateString('id-ID')}
+                    {report.date instanceof Date ? report.date.toLocaleDateString('id-ID') : report.date}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-800 dark:text-primary-100">
                     {formatCurrency(report.income)}
@@ -88,10 +80,10 @@ const PreviousReportsList: React.FC = () => {
                     {formatCurrency(report.expenses)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-800 dark:text-primary-100">
-                    {formatCurrency(report.previousBalance)}
+                    {formatCurrency(report.previousBalance || 0)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-800 dark:text-primary-100">
-                    {formatCurrency(report.result)}
+                    {formatCurrency(report.result || 0)}
                   </td>
                 </tr>
               ))}
