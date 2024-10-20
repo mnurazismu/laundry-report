@@ -1,22 +1,27 @@
-import React, { useEffect, useState } from "react";
-import { collection, query, where, orderBy, getDocs, limit } from "firebase/firestore";
-import { db } from "@/app/lib/firebase";
 import { useAuth } from "@/app/components/AuthProvider";
-import { format, subDays } from "date-fns";
+import { db } from "@/app/lib/firebase";
+import { format } from "date-fns";
+import {
+    collection,
+    getDocs,
+    limit,
+    orderBy,
+    query,
+    where,
+} from "firebase/firestore";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
-
-interface DailyReport {
-  id: string;
-  date: Date;
-  income: number;
-  expenses: number;
-  balance: number;
-}
+import { UserOptions } from "jspdf-autotable";
+import React, { useEffect, useState } from "react";
+import { DailyReport, FirestoreDailyReport } from "../types/report";
 
 interface MonthlyReportDetailProps {
   month: string;
 }
+
+type JsPDFWithPlugin = jsPDF & {
+  autoTable: (options: UserOptions) => void;
+};
 
 const MonthlyReportDetail: React.FC<MonthlyReportDetailProps> = ({ month }) => {
   const [reports, setReports] = useState<DailyReport[]>([]);
@@ -35,25 +40,20 @@ const MonthlyReportDetail: React.FC<MonthlyReportDetailProps> = ({ month }) => {
       const startDate = new Date(year, monthIndex - 1, 1);
       const endDate = new Date(year, monthIndex, 0);
 
-      console.log("Date range:", { startDate, endDate });
-
-      
-
-      // Fetch the balance from the day before the start of the month
-      const previousDayDate = subDays(startDate, 1);
-      console.log("Previous day date:", previousDayDate);
-      const previousDayQuery = query(
+      const startDayQuery = query(
         collection(db, "dailyReports"),
         where("userId", "==", user.uid),
-        where("date", "<=", previousDayDate),
-        orderBy("date", "desc"),
+        where("date", ">=", startDate),
+        orderBy("date", "asc"),
         limit(1)
       );
+      const startDaySnapshot = await getDocs(startDayQuery);
 
-      const previousDaySnapshot = await getDocs(previousDayQuery);
       let initialBalance = 0;
-      if (!previousDaySnapshot.empty) {
-        initialBalance = previousDaySnapshot.docs[0].data().previousBalance || 0;
+      if (!startDaySnapshot.empty) {
+        const startDayData =
+          startDaySnapshot.docs[0].data() as FirestoreDailyReport;
+        initialBalance = startDayData.previousBalance || 0;
       }
 
       const reportsRef = collection(db, "dailyReports");
@@ -67,11 +67,10 @@ const MonthlyReportDetail: React.FC<MonthlyReportDetailProps> = ({ month }) => {
 
       try {
         const querySnapshot = await getDocs(q);
-        console.log("Query snapshot size:", querySnapshot.size);
 
         let runningBalance = initialBalance;
         const fetchedReports: DailyReport[] = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
+          const data = doc.data() as FirestoreDailyReport;
           const dailyResult = data.income - data.expenses;
           runningBalance += dailyResult;
           return {
@@ -83,7 +82,6 @@ const MonthlyReportDetail: React.FC<MonthlyReportDetailProps> = ({ month }) => {
           };
         });
 
-        console.log("Fetched reports:", fetchedReports);
         setReports(fetchedReports);
       } catch (error) {
         console.error("Error fetching reports:", error);
@@ -103,7 +101,7 @@ const MonthlyReportDetail: React.FC<MonthlyReportDetailProps> = ({ month }) => {
   };
 
   const handleDownloadPDF = () => {
-    const doc = new jsPDF();
+    const doc = new jsPDF() as JsPDFWithPlugin;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.text(
@@ -124,7 +122,7 @@ const MonthlyReportDetail: React.FC<MonthlyReportDetailProps> = ({ month }) => {
       formatCurrency(report.income),
       formatCurrency(report.expenses),
       formatCurrency(report.income - report.expenses),
-      formatCurrency(report.balance),
+      formatCurrency(report.balance || 0),
     ]);
 
     const totalIncome = reports.reduce((sum, report) => sum + report.income, 0);
@@ -162,7 +160,7 @@ const MonthlyReportDetail: React.FC<MonthlyReportDetailProps> = ({ month }) => {
           formatCurrency(totalIncome),
           formatCurrency(totalExpenses),
           formatCurrency(netResult),
-          formatCurrency(finalBalance),
+          formatCurrency(finalBalance || 0),
         ],
       ],
       startY: finalY + 15,
@@ -195,7 +193,7 @@ const MonthlyReportDetail: React.FC<MonthlyReportDetailProps> = ({ month }) => {
   return (
     <div className="min-h-screen bg-primary-100 dark:bg-primary-800 p-8">
       <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 justify-between items-center">
           <h1 className="text-3xl font-bold text-primary-800 dark:text-primary-100">
             Monthly Report - {format(new Date(month), "MMMM yyyy")}
           </h1>
@@ -244,7 +242,7 @@ const MonthlyReportDetail: React.FC<MonthlyReportDetailProps> = ({ month }) => {
                     {formatCurrency(report.income - report.expenses)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-800 dark:text-primary-100">
-                    {formatCurrency(report.balance)}
+                    {formatCurrency(report.balance || 0)}
                   </td>
                 </tr>
               ))}
@@ -264,7 +262,7 @@ const MonthlyReportDetail: React.FC<MonthlyReportDetailProps> = ({ month }) => {
                   {formatCurrency(netResult)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-800 dark:text-primary-100">
-                  {formatCurrency(finalBalance)}
+                  {formatCurrency(finalBalance || 0)}
                 </td>
               </tr>
             </tfoot>
